@@ -5,5 +5,8 @@ export default {
   theme: {
     extend: {},
   },
-  plugins: [],
+  daisyui: {
+    themes: ["light", "dark", "retro", "winter"],
+  },
+  plugins: [require("@tailwindcss/typography"), require("daisyui")],
 } satisfies Config;

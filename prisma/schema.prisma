@@ -81,7 +81,7 @@ model Assignment {
     createdAt DateTime @default(now())
     title     String
     content   String   @db.Text
-    fileURL   String
+    fileURL   String?
     week      Week     @relation(fields: [weekId], references: [id])
     weekId    String
 }
