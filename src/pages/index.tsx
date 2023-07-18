@@ -1,6 +1,5 @@
 import { useSession } from "next-auth/react";
 import Head from "next/head";
-import { FileInput } from "@mantine/core";
 import { useRef, useState } from "react";
 import { Header } from "~/components/Header";
 import { api, type RouterOutputs } from "~/utils/api";
@@ -24,15 +23,15 @@ export default function Home() {
 }
 
 type Week = RouterOutputs["week"]["getAll"][0];
-type Assignment = RouterOutputs["assignment"]["getAll"][0];
+// type Assignment = RouterOutputs["assignment"]["getAll"][0];
 
 function Content() {
   const [weekInput, setWeekInput] = useState<number>(0);
   const [selectedWeek, setSelectedWeek] = useState<Week | null>(null);
   const [assignmentTitle, setAssignmentTitle] = useState<string>("");
   const [assignmentContent, setAssignmentContent] = useState<string>("");
-  const inputRef = useRef<any>();
-  const [file, setFile] = useState<any>();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [file, setFile] = useState<File>();
 
   const { data: sessionData } = useSession();
   const { data: weeks, refetch: refetchWeeks } = api.week.getAll.useQuery(
@@ -74,16 +73,17 @@ function Content() {
   });
 
   const handleAssignmentSubmit = async () => {
-    if (!file || !selectedWeek) return;
+    if (!file || !selectedWeek || !sessionData) return;
 
-    const fileExtension = file.name.split(".")[1];
+    const fileExtensionArray: string[] | undefined = file?.name.split(".");
+    if (!fileExtensionArray) return;
 
-    const { data: supabaseFileData, error } = await supabase.storage
+    const fileExtension: string | undefined = fileExtensionArray[1];
+    if (!fileExtension) return;
+
+    const { data: supabaseFileData } = await supabase.storage
       .from("teacher-files")
-      .upload(
-        sessionData?.user.id + "/" + uuidv4() + "." + fileExtension,
-        file
-      );
+      .upload(sessionData.user.id + "/" + uuidv4() + "." + fileExtension, file);
 
     const fileURL = supabaseFileData?.path.split("/")[1];
     if (!fileURL) return;
@@ -101,9 +101,10 @@ function Content() {
   };
 
   const downloadFile = async (fileURL: string) => {
-    const { data, error } = await supabase.storage
+    if (!sessionData) return;
+    const { data } = await supabase.storage
       .from("teacher-files")
-      .download(sessionData?.user.id + "/" + fileURL);
+      .download(sessionData.user.id + "/" + fileURL);
 
     if (!data) return;
     const url = window.URL.createObjectURL(data);
@@ -116,8 +117,7 @@ function Content() {
   const resetFileInput = () => {
     // 👇️ reset input value
     if (!inputRef.current) return;
-    // console.log(inputRef.current);
-    inputRef.current.value = null;
+    inputRef.current.value = "";
   };
 
   return (
@@ -180,22 +180,29 @@ function Content() {
             type="file"
             ref={inputRef}
             className="file-input-bordered file-input w-full max-w-xs"
-            onChange={(e) => setFile(e.target.files?.[0])}
+            onChange={(e) => {
+              if (e.target.files) void setFile(e.target.files[0]);
+            }}
           />
-          <button className="navbar" onClick={handleAssignmentSubmit}>
+          <button
+            className="navbar"
+            onClick={() => void handleAssignmentSubmit()}
+          >
             <a className="btn">Add assignment</a>
           </button>
-          {/*
+
           <button className="navbar" onClick={() => deleteAssignments.mutate()}>
             <a className="btn">Delete Assignments</a>
           </button>
-              */}
         </section>
       </div>
       <div className="flex w-2/3 flex-wrap">
         {assignments && assignments.length > 0 ? (
           assignments.map((assignment) => (
-            <div className="card ml-5 mt-5 w-1/3 px-3 py-1 shadow-xl">
+            <div
+              className="card ml-5 mt-5 w-1/3 px-3 py-1 shadow-xl"
+              key={assignment.id}
+            >
               <div className="card-body">
                 <h2 className="card-title">{assignment.title}</h2>
                 <p>{assignment.content}</p>
@@ -204,7 +211,7 @@ function Content() {
                     className="btn-primary btn"
                     onClick={() => {
                       if (!assignment.fileURL) return;
-                      downloadFile(assignment.fileURL);
+                      void downloadFile(assignment.fileURL);
                     }}
                   >
                     Download File

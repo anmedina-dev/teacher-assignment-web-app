@@ -32,7 +32,7 @@ export const assignmentRouter = createTRPCRouter({
       });
     }),
 
-  deleteAll: protectedProcedure.mutation(({ ctx, input }) => {
+  deleteAll: protectedProcedure.mutation(({ ctx }) => {
     return ctx.prisma.assignment.deleteMany({});
   }),
 });
