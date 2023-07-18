@@ -7,6 +7,7 @@ import { supabase } from "~/utils/supabase";
 import { v4 as uuidv4 } from "uuid";
 
 export default function Home() {
+  const { data: sessionData } = useSession();
   return (
     <>
       <Head>
@@ -16,7 +17,13 @@ export default function Home() {
       </Head>
       <main>
         <Header />
-        <Content />
+        {sessionData ? (
+          <Content />
+        ) : (
+          <section className="mt-10 flex justify-center">
+            <p>Please Sign In</p>
+          </section>
+        )}
       </main>
     </>
   );

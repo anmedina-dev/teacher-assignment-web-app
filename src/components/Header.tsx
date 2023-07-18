@@ -11,7 +11,7 @@ export const Header = () => {
           {sessionData?.user ? (
             <>{sessionData.user.name}&apos;s </>
           ) : (
-            <>Teacher Assignment</>
+            <>Teacher </>
           )}
           Assignment Web App
         </a>
@@ -50,7 +50,7 @@ export const Header = () => {
         ) : (
           <div className="navbar-end">
             <a className="btn" onClick={() => void signIn()}>
-              Button
+              Sign In
             </a>
           </div>
         )}
